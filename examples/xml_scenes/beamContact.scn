@@ -45,33 +45,33 @@
 <!--                <ReadState filename="posNeedle" />-->
         </Node>
 
-<!--        <Node name="Needle">
-                <EulerImplicitSolver rayleighMass="0" rayleighStiffness="0" />
-                <SparseLUSolver />
+<!--        <Node name="Needle">-->
+<!--                <EulerImplicitSolver rayleighMass="0" rayleighStiffness="0" />-->
+<!--                <SparseLUSolver />-->
 
-                <EdgeSetTopologyContainer name="Container" position="0 0 0   2 0 0    4 0 0    6 0 0    8 0 0   10 0 0   12 0 0    14 0 0   16 0 0" edges="0 1 1 2 2 3 3 4 4 5 5 6 6 7 7 8"/>
+<!--                <EdgeSetTopologyContainer name="Container" position="0 0 0   2 0 0    4 0 0    6 0 0    8 0 0   10 0 0   12 0 0    14 0 0   16 0 0" edges="0 1 1 2 2 3 3 4 4 5 5 6 6 7 7 8"/>-->
 
-                <MechanicalObject name="ms" template="Rigid" />
-                <BeamFEMForceField name="FEM" radius="0.8" youngModulus="1e7" poissonRatio="0.45"/>
-                <RestShapeSpringsForceField external_rest_shape="@../OmniControler/ms" stiffness="5000"  angularStiffness="500000" points="0" external_points="0" />
+<!--                <MechanicalObject name="ms" template="Rigid" />-->
+<!--                <BeamFEMForceField name="FEM" radius="0.8" youngModulus="1e7" poissonRatio="0.45"/>-->
+<!--                <RestShapeSpringsForceField external_rest_shape="@../OmniControler/ms" stiffness="5000"  angularStiffness="500000" points="0" external_points="0" />-->
                 
 
-                <Node name="Collision">
-                        <EdgeSetTopologyContainer name="Container" src="@../Container" />
-                        <MechanicalObject name="ms" />
+<!--                <Node name="Collision">-->
+<!--                        <EdgeSetTopologyContainer name="Container" src="@../Container" />-->
+<!--                        <MechanicalObject name="ms" />-->
 
-                        <EdgeGeometry name="needle" />
-                        <Sphere radius="0.1" />
-                        <BeamLinearMapping localCoord="false" />
-                </Node>
+<!--                        <EdgeGeometry name="needle" />-->
+<!--                        <Sphere radius="0.1" />-->
+<!--                        <BeamLinearMapping localCoord="false" />-->
+<!--                </Node>-->
 
-                <Node name="Base">
-                        <MechanicalObject name="ms" template="Rigid" position="0 0 0  0 0 0 1"   />
-                        <RigidRigidMapping />
-                </Node>
+<!--                <Node name="Base">-->
+<!--                        <MechanicalObject name="ms" template="Rigid" position="0 0 0  0 0 0 1"   />-->
+<!--                        <RigidRigidMapping />-->
+<!--                </Node>-->
 
-                <LinearSolverConstraintCorrection />
-        </Node>-->
+<!--                <LinearSolverConstraintCorrection />-->
+<!--        </Node>-->
 
         <Node name="Needle">
                <EulerImplicitSolver rayleighMass="0" rayleighStiffness="0" />
@@ -100,21 +100,21 @@
                 <LinearSolverConstraintCorrection />
         </Node>
 
-<!--        <Node name="ForceFeedback" >
-                <MechanicalObject name="ms" template="Rigid" showObject="true" src="@../Needle/Base/ms" />
+<!--        <Node name="ForceFeedback" >-->
+<!--                <MechanicalObject name="ms" template="Rigid" showObject="true" src="@../Needle/Base/ms" />-->
 
-                <Node name="Collision">
-                        <EdgeSetTopologyContainer name="Container" src="@../../Needle/Collision/Container" />
-                        <MechanicalObject name="ms" constraint="@../../Needle/Collision/ms.constraint" />
+<!--                <Node name="Collision">-->
+<!--                        <EdgeSetTopologyContainer name="Container" src="@../../Needle/Collision/Container" />-->
+<!--                        <MechanicalObject name="ms" constraint="@../../Needle/Collision/ms.constraint" />-->
 
-                        <Line color="1 0 0 1" />
-                        <Point color="1 0 0 1"  />
+<!--                        <Line color="1 0 0 1" />-->
+<!--                        <Point color="1 0 0 1"  />-->
 
-                        <RigidMapping />
-                </Node>
+<!--                        <RigidMapping />-->
+<!--                </Node>-->
 
-                <LCPForceFeedback tags="sensable"  activate="true" printLog="false" forceCoef="0.05" solverTimeout="0.0001" />
-        </Node>-->
+<!--                <LCPForceFeedback tags="sensable"  activate="true" printLog="false" forceCoef="0.05" solverTimeout="0.0001" />-->
+<!--        </Node>-->
 
         <Node name="GEL">
                 <EulerImplicitSolver rayleighMass="0.1" rayleighStiffness="0.1" />
@@ -145,13 +145,13 @@
 			<BarycentricMapping />
                 </Node>
 
-<!--                <Node name="Trajectory">
-                        <EdgeSetTopologyContainer name="Container" />
-                        <EdgeSetTopologyModifier name="Modifier" />
-                        <MechanicalObject name="ms" />
-                        <NeedleTrajectoryGeometry name="trajectory" entryDist="1" constraintDist="2" clearTrajectory="false" />
-                        <BarycentricMapping listening="true" useRestPosition="false" />
-                </Node>-->
+<!--                <Node name="Trajectory">-->
+<!--                        <EdgeSetTopologyContainer name="Container" />-->
+<!--                        <EdgeSetTopologyModifier name="Modifier" />-->
+<!--                        <MechanicalObject name="ms" />-->
+<!--                        <NeedleTrajectoryGeometry name="trajectory" entryDist="1" constraintDist="2" clearTrajectory="false" />-->
+<!--                        <BarycentricMapping listening="true" useRestPosition="false" />-->
+<!--                </Node>-->
                 
                 <LinearSolverConstraintCorrection solverName="precond"/>
 	</Node>	

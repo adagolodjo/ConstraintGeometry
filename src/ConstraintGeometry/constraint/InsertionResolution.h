@@ -47,11 +47,18 @@ public:
 
         // Back solve 2x2 system with friction on the RHS
         const SReal denom = w[line+1][line+1] * w[line+2][line+2] - w[line+1][line+2] * w[line+2][line+1];
-        const SReal nom1 = w[line+1][line+2] * (d[line+2] + w[line+2][line+0] * corr[0]);
-        const SReal nom2 = w[line+2][line+2] * (d[line+1] + w[line+1][line+0] * corr[0]);
-        corr[1] = (nom1 - nom2) / denom;
-
-        corr[2] = -(d[line+2] + w[line+2][line+0] * corr[0] + w[line+2][line+1] * corr[1]) / w[line+2][line+2];
+        
+        constexpr SReal epsilon = 1e-12;
+        if (std::abs(denom) < epsilon) {
+            // Fallback for singular/near-singular matrix: use pseudo-inverse
+            corr[1] = -d[line+1] / (w[line+1][line+1] + epsilon);
+            corr[2] = -d[line+2] / (w[line+2][line+2] + epsilon);
+        } else {
+            const SReal nom1 = w[line+1][line+2] * (d[line+2] + w[line+2][line+0] * corr[0]);
+            const SReal nom2 = w[line+2][line+2] * (d[line+1] + w[line+1][line+0] * corr[0]);
+            corr[1] = (nom1 - nom2) / denom;
+            corr[2] = -(d[line+2] + w[line+2][line+0] * corr[0] + w[line+2][line+1] * corr[1]) / w[line+2][line+2];
+        }
 
         for (int i = 0; i < 3; i++) 
             force[line+i] += corr[i];

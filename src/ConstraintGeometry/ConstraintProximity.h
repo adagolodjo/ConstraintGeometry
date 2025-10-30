@@ -54,7 +54,7 @@ public:
     }
 
     static typename TConstraintProximity<PROXIMITY>::SPtr create(const typename PROXIMITY::SPtr & p,FUNC_GET_NORMAL n) {
-        return TConstraintProximity<PROXIMITY>::SPtr(new TConstraintProximity(p,n));
+        return std::make_shared<TConstraintProximity<PROXIMITY>>(p, n);
     }
 
     const typename PROXIMITY::SPtr & getProx() const { return m_prox; }
@@ -125,7 +125,7 @@ public:
     }
 
     static ConstraintProximity::SPtr create(const collisionalgorithm::BaseProximity::SPtr & p) {
-        return ConstraintProximity::SPtr(new DefaultConstraintProximity(p));
+        return std::make_shared<DefaultConstraintProximity>(p);
     }
 
 protected:
@@ -173,7 +173,7 @@ public:
     }
 
     static ConstraintProximity::SPtr create(const std::vector<ConstraintProximity::SPtr> & p) {
-        return ConstraintProximity::SPtr(new MultiConstraintProximity(p));
+        return std::make_shared<MultiConstraintProximity>(p);
     }
 
 protected:

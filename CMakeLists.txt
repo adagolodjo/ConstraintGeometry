@@ -13,7 +13,39 @@ find_package(Sofa.GL REQUIRED)
 
 set(CONSTRAINTGEOMETRY_SRC "src/${PROJECT_NAME}")
 
-file(GLOB_RECURSE HEADER_FILES CONFIGURE_DEPENDS "${CONSTRAINTGEOMETRY_SRC}/*.h")
+set(HEADER_FILES
+        ${CONSTRAINTGEOMETRY_SRC}/config.h.in
+        ${CONSTRAINTGEOMETRY_SRC}/initConstraintGeometry.h
+
+        ${CONSTRAINTGEOMETRY_SRC}/BaseConstraint.h
+        ${CONSTRAINTGEOMETRY_SRC}/BaseNormalHandler.h
+        ${CONSTRAINTGEOMETRY_SRC}/ConstraintDirection.h
+        ${CONSTRAINTGEOMETRY_SRC}/ConstraintNormal.h
+        ${CONSTRAINTGEOMETRY_SRC}/ConstraintProximity.h
+        ${CONSTRAINTGEOMETRY_SRC}/ConstraintResponse.h
+        ${CONSTRAINTGEOMETRY_SRC}/InternalConstraint.h
+
+        ${CONSTRAINTGEOMETRY_SRC}/constraint/BilateralResolution.h
+        ${CONSTRAINTGEOMETRY_SRC}/constraint/ConstraintBilateral.h
+        ${CONSTRAINTGEOMETRY_SRC}/constraint/ConstraintInsertion.h
+        ${CONSTRAINTGEOMETRY_SRC}/constraint/ConstraintUnilateral.h
+        ${CONSTRAINTGEOMETRY_SRC}/constraint/InsertionResolution.h
+        ${CONSTRAINTGEOMETRY_SRC}/constraint/UnilateralResolution.h
+
+        ${CONSTRAINTGEOMETRY_SRC}/directions/BindDirection.h
+        ${CONSTRAINTGEOMETRY_SRC}/directions/ContactDirection.h
+        ${CONSTRAINTGEOMETRY_SRC}/directions/FirstDirection.h
+        ${CONSTRAINTGEOMETRY_SRC}/directions/FixedFrameDirection.h
+        ${CONSTRAINTGEOMETRY_SRC}/directions/SecondDirection.h
+
+        ${CONSTRAINTGEOMETRY_SRC}/normalHandler/EdgeNormalHandler.h
+        ${CONSTRAINTGEOMETRY_SRC}/normalHandler/GouraudTriangleNormalHandler.h
+        ${CONSTRAINTGEOMETRY_SRC}/normalHandler/GravityPointNormalHandler.h
+        ${CONSTRAINTGEOMETRY_SRC}/normalHandler/PhongTriangleNormalHandler.h
+        ${CONSTRAINTGEOMETRY_SRC}/normalHandler/VectorPointNormalHandler.h
+
+        ${CONSTRAINTGEOMETRY_SRC}/operations/ConstraintProximityOperation.h
+)
 file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS "${CONSTRAINTGEOMETRY_SRC}/*.cpp")
 
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES} ${HEADER_FILES})

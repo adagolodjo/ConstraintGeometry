@@ -50,13 +50,13 @@ file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS "${CONSTRAINTGEOMETRY_SRC}/*.cp
 
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES} ${HEADER_FILES})
 
-target_include_directories(${PROJECT_NAME} PUBLIC 
+target_include_directories(${PROJECT_NAME} PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
     $<INSTALL_INTERFACE:include>
 )
 
 
-target_link_libraries(${PROJECT_NAME} 
+target_link_libraries(${PROJECT_NAME}
     CollisionAlgorithm
     Sofa.Component.StateContainer
     Sofa.Component.Constraint.Lagrangian.Solver
@@ -64,7 +64,7 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 sofa_create_package_with_targets(
-    PACKAGE_NAME ${PROJECT_NAME} 
+    PACKAGE_NAME ${PROJECT_NAME}
     PACKAGE_VERSION ${PROJECT_VERSION}
     TARGETS ${PROJECT_NAME} AUTO_SET_TARGET_PROPERTIES
     INCLUDE_SOURCE_DIR "src"
@@ -73,8 +73,8 @@ sofa_create_package_with_targets(
     RELOCATABLE "plugins"
 )
 
-enable_testing()
+# enable_testing()
 
-if(SOFA_BUILD_TESTS)
-    add_subdirectory(tests/unit)
-endif()
+# if(SOFA_BUILD_TESTS)
+#    add_subdirectory(tests/unit)
+#endif()

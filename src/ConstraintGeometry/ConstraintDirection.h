@@ -1,11 +1,11 @@
 #pragma once
 
-#include <ConstraintGeometry/config.h>
 #include <CollisionAlgorithm/BaseAlgorithm.h>
 #include <CollisionAlgorithm/BaseGeometry.h>
-#include <sofa/core/behavior/BaseLagrangianConstraint.h>
 #include <ConstraintGeometry/ConstraintNormal.h>
 #include <ConstraintGeometry/InternalConstraint.h>
+#include <ConstraintGeometry/config.h>
+#include <sofa/core/behavior/BaseLagrangianConstraint.h>
 
 namespace sofa::constraintgeometry {
 
@@ -18,8 +18,8 @@ public:
 
     typedef collisionalgorithm::BaseProximity BaseProximity;
 
-    virtual ConstraintNormal createConstraintsNormal(const BaseProximity::SPtr & first, const BaseProximity::SPtr & second) const = 0;
-
+    virtual ConstraintNormal createConstraintsNormal(const BaseProximity::SPtr& first,
+                                                     const BaseProximity::SPtr& second) const = 0;
 };
 
-}
+}  // namespace sofa::constraintgeometry

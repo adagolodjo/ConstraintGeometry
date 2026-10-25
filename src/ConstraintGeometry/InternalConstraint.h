@@ -1,11 +1,10 @@
 #pragma once
 
-#include <ConstraintGeometry/config.h>
-#include <ConstraintGeometry/ConstraintNormal.h>
-#include <sofa/core/behavior/BaseLagrangianConstraint.h>
 #include <CollisionAlgorithm/BaseAlgorithm.h>
+#include <ConstraintGeometry/ConstraintNormal.h>
+#include <ConstraintGeometry/config.h>
+#include <sofa/core/behavior/BaseLagrangianConstraint.h>
 #include <sofa/type/vector.h>
-
 
 namespace sofa::constraintgeometry {
 
@@ -21,11 +20,12 @@ public:
 
     virtual void toString(std::ostream& out) const = 0;
 
-    virtual void buildConstraintMatrix(core::MultiMatrixDerivId , unsigned int & ) const = 0;
+    virtual void buildConstraintMatrix(core::MultiMatrixDerivId, unsigned int&) const = 0;
 
-    virtual void storeLambda(const core::ConstraintParams* , core::MultiVecDerivId , const sofa::linearalgebra::BaseVector* ) const = 0;
+    virtual void storeLambda(const core::ConstraintParams*, core::MultiVecDerivId,
+                             const sofa::linearalgebra::BaseVector*) const = 0;
 
-    virtual void getConstraintViolation(linearalgebra::BaseVector *) const = 0;
+    virtual void getConstraintViolation(linearalgebra::BaseVector*) const = 0;
 
     virtual core::behavior::ConstraintResolution* createConstraintResolution() const = 0;
 
@@ -35,45 +35,45 @@ public:
 
     virtual collisionalgorithm::BaseBaseProximity::SPtr getSecondPair(unsigned i) const = 0;
 
-    virtual void draw(const core::visual::VisualParams* ,double ) const = 0;
+    virtual void draw(const core::visual::VisualParams*, double) const = 0;
 
-    virtual const std::vector<ConstraintNormal> & getConstraintNormal() const = 0;
+    virtual const std::vector<ConstraintNormal>& getConstraintNormal() const = 0;
 
-    friend inline std::istream& operator >> ( std::istream& in, std::vector<BaseInternalConstraint::SPtr> &) {
+    friend inline std::istream& operator>>(std::istream& in, std::vector<BaseInternalConstraint::SPtr>&) {
         return in;
     }
 
-    friend inline std::ostream& operator << (std::ostream& out, const std::vector<BaseInternalConstraint::SPtr> & v) {
-        for (unsigned i=0;i<v.size();i++) {
-            if (v.size()>1) out << "[";
+    friend inline std::ostream& operator<<(std::ostream& out, const std::vector<BaseInternalConstraint::SPtr>& v) {
+        for (unsigned i = 0; i < v.size(); i++) {
+            if (v.size() > 1) out << "[";
             v[i]->toString(out);
-            if (v.size()>1) out << "]" << std::endl;
+            if (v.size() > 1) out << "]" << std::endl;
         }
         return out;
     }
 };
 
-template<class FIRST,class SECOND>
+template <class FIRST, class SECOND>
 class InternalConstraint : public BaseInternalConstraint {
-public :
+public:
+    typedef std::shared_ptr<InternalConstraint<FIRST, SECOND>> SPtr;
 
-    typedef std::shared_ptr<InternalConstraint<FIRST,SECOND>> SPtr;
-
-//    typedef collisionalgorithm::BaseProximity FIRST;
-//    typedef collisionalgorithm::BaseProximity SECOND;
+    //    typedef collisionalgorithm::BaseProximity FIRST;
+    //    typedef collisionalgorithm::BaseProximity SECOND;
 
     typedef collisionalgorithm::BaseProximity BaseProximity;
-    typedef std::function<core::behavior::ConstraintResolution*(const BaseInternalConstraint *)> ResolutionCreator;
-    typedef std::function<void(const InternalConstraint * ,linearalgebra::BaseVector *)> ViolationFunc;
-    typedef std::function<ConstraintNormal(const typename FIRST::SPtr & ,const typename SECOND::SPtr & )> NormalsFunc;
+    typedef std::function<core::behavior::ConstraintResolution*(const BaseInternalConstraint*)> ResolutionCreator;
+    typedef std::function<void(const InternalConstraint*, linearalgebra::BaseVector*)> ViolationFunc;
+    typedef std::function<ConstraintNormal(const typename FIRST::SPtr&, const typename SECOND::SPtr&)> NormalsFunc;
 
-    static void defaultViolationFunc(const InternalConstraint * ic, linearalgebra::BaseVector *v) {
-        //the ConstraintNormal will compute the all violation (i.e. 1 to 3 depending on the size of the ConstraintNormal)
+    static void defaultViolationFunc(const InternalConstraint* ic, linearalgebra::BaseVector* v) {
+        // the ConstraintNormal will compute the all violation (i.e. 1 to 3 depending on the size of the
+        // ConstraintNormal)
         unsigned int lcid = ic->m_cid;
-        for (unsigned i=0; i<ic->m_vecNormals.size(); i++) {
+        for (unsigned i = 0; i < ic->m_vecNormals.size(); i++) {
             ic->m_vecNormals[i].computeViolations(lcid, ic->m_pairs[i].first, ic->m_pairs[i].second, v);
 
-            /*++ lcid;*/  lcid += ic->m_vecNormals[i].size();
+            /*++ lcid;*/ lcid += ic->m_vecNormals[i].size();
         }
     }
 
@@ -85,40 +85,32 @@ public :
      * \param normals : ConstraintNormals
      * \param creator : resolutionCreator (factory)
      */
-    InternalConstraint(const typename FIRST::SPtr & first, const typename SECOND::SPtr & second,
-                       NormalsFunc nf, ResolutionCreator creator, ViolationFunc f = &defaultViolationFunc )
-    : m_creator(creator)
-    , m_cid(0)
-    , m_cSetId(0)
-    , m_cDirId(0)
-    , m_violationFunc(f)
-    , m_normalFunc(nf) {
+    InternalConstraint(const typename FIRST::SPtr& first, const typename SECOND::SPtr& second, NormalsFunc nf,
+                       ResolutionCreator creator, ViolationFunc f = &defaultViolationFunc)
+        : m_creator(creator), m_cid(0), m_cSetId(0), m_cDirId(0), m_violationFunc(f), m_normalFunc(nf) {
         m_pairs.push_back(std::pair<const typename FIRST::SPtr, const typename SECOND::SPtr>(first, second));
-        m_vecNormals.push_back(m_normalFunc(first,second));
+        m_vecNormals.push_back(m_normalFunc(first, second));
     }
 
-    InternalConstraint(const std::vector<std::pair<const typename FIRST::SPtr,const typename SECOND::SPtr>> & pairs,
+    InternalConstraint(const std::vector<std::pair<const typename FIRST::SPtr, const typename SECOND::SPtr>>& pairs,
                        NormalsFunc nf, ResolutionCreator creator, ViolationFunc f = &defaultViolationFunc)
-    : m_creator(creator)
-    , m_cid(0)
-    , m_cSetId(0)
-    , m_cDirId(0)
-    , m_violationFunc(f)
-    , m_normalFunc(nf) {
-        for (unsigned i=0;i<pairs.size();i++) {
-            m_pairs.push_back(std::pair<const typename FIRST::SPtr,const typename SECOND::SPtr>(pairs[i].first,pairs[i].second));
-            m_vecNormals.push_back(m_normalFunc(pairs[i].first,pairs[i].second));
+        : m_creator(creator), m_cid(0), m_cSetId(0), m_cDirId(0), m_violationFunc(f), m_normalFunc(nf) {
+        for (unsigned i = 0; i < pairs.size(); i++) {
+            m_pairs.push_back(
+                std::pair<const typename FIRST::SPtr, const typename SECOND::SPtr>(pairs[i].first, pairs[i].second));
+            m_vecNormals.push_back(m_normalFunc(pairs[i].first, pairs[i].second));
         }
     }
 
-    static inline SPtr create(const typename FIRST::SPtr & first, const typename SECOND::SPtr & second,
-                       NormalsFunc nf, ResolutionCreator creator, ViolationFunc f = &defaultViolationFunc) {
-        return SPtr(new InternalConstraint(first,second,nf,creator,f));
+    static inline SPtr create(const typename FIRST::SPtr& first, const typename SECOND::SPtr& second, NormalsFunc nf,
+                              ResolutionCreator creator, ViolationFunc f = &defaultViolationFunc) {
+        return SPtr(new InternalConstraint(first, second, nf, creator, f));
     }
 
-    static inline SPtr create(const std::vector<std::pair<const typename FIRST::SPtr,const typename SECOND::SPtr>> & pairs,
-                       NormalsFunc nf, ResolutionCreator creator, ViolationFunc f = &defaultViolationFunc) {
-        return SPtr(new InternalConstraint(pairs,nf,creator,f));
+    static inline SPtr create(
+        const std::vector<std::pair<const typename FIRST::SPtr, const typename SECOND::SPtr>>& pairs, NormalsFunc nf,
+        ResolutionCreator creator, ViolationFunc f = &defaultViolationFunc) {
+        return SPtr(new InternalConstraint(pairs, nf, creator, f));
     }
 
     /*!
@@ -127,19 +119,19 @@ public :
      * \param cId
      * \param constraintId
      */
-    void buildConstraintMatrix(core::MultiMatrixDerivId cId, unsigned int & constraintId) const override {
+    void buildConstraintMatrix(core::MultiMatrixDerivId cId, unsigned int& constraintId) const override {
         m_cid = constraintId;
 
-        for (unsigned i=0; i<m_vecNormals.size(); i++) {
-            m_pairs[i].first->buildJacobianConstraint(cId, m_vecNormals[i].getDirs(),  1.0, constraintId);
+        for (unsigned i = 0; i < m_vecNormals.size(); i++) {
+            m_pairs[i].first->buildJacobianConstraint(cId, m_vecNormals[i].getDirs(), 1.0, constraintId);
             m_pairs[i].second->buildJacobianConstraint(cId, m_vecNormals[i].getDirs(), -1.0, constraintId);
 
             constraintId += m_vecNormals[i].size();
         }
     }
 
-    void getConstraintViolation(linearalgebra::BaseVector *v) const {
-        m_violationFunc(this,v);
+    void getConstraintViolation(linearalgebra::BaseVector* v) const {
+        m_violationFunc(this, v);
     }
 
     /*!
@@ -156,12 +148,13 @@ public :
      * \param res
      * \param lambda
      */
-    void storeLambda(const core::ConstraintParams* cParams, core::MultiVecDerivId res, const sofa::linearalgebra::BaseVector* lambda) const {
-        unsigned int lcid=m_cid;
-        for (unsigned k=0; k<m_vecNormals.size(); k++) {
-            for (unsigned i=0;i<m_vecNormals[k].size();i++) {
-                m_pairs[k].first->storeLambda(cParams,res,/*m_cid*/lcid,i,lambda);
-                m_pairs[k].second->storeLambda(cParams,res,/*m_cid*/lcid,i,lambda);
+    void storeLambda(const core::ConstraintParams* cParams, core::MultiVecDerivId res,
+                     const sofa::linearalgebra::BaseVector* lambda) const {
+        unsigned int lcid = m_cid;
+        for (unsigned k = 0; k < m_vecNormals.size(); k++) {
+            for (unsigned i = 0; i < m_vecNormals[k].size(); i++) {
+                m_pairs[k].first->storeLambda(cParams, res, /*m_cid*/ lcid, i, lambda);
+                m_pairs[k].second->storeLambda(cParams, res, /*m_cid*/ lcid, i, lambda);
             }
             lcid += m_vecNormals[k].size();
         }
@@ -174,51 +167,67 @@ public :
      * \return lambda element @ cid+id
      */
     double getLambda(const sofa::linearalgebra::BaseVector* lambda, unsigned id) {
-        return lambda->element(m_cid+id);
+        return lambda->element(m_cid + id);
     }
 
-    void draw(const core::visual::VisualParams* vparams,double scale) const {
-        for (unsigned i=0; i<m_vecNormals.size(); i++) {
-            draw(vparams,scale,i);
-        }
-    }
-
-    void draw(const core::visual::VisualParams* vparams,double scale, unsigned i) const {
-        if (m_vecNormals[i].size()>0) {
-            vparams->drawTool()->drawArrow(m_pairs[i].first->getPosition(), m_pairs[i].first->getPosition() + m_vecNormals[i].getDirs()[0] * scale, scale * 0.1, type::RGBAColor(1,0,0,1));
-            vparams->drawTool()->drawArrow(m_pairs[i].second->getPosition(), m_pairs[i].second->getPosition() - m_vecNormals[i].getDirs()[0] * scale, scale * 0.1, type::RGBAColor(1,0,0,1));
-        }
-
-        if (m_vecNormals[i].size()>1) {
-            vparams->drawTool()->drawArrow(m_pairs[i].first->getPosition(), m_pairs[i].first->getPosition() + m_vecNormals[i].getDirs()[1] * scale, scale * 0.1, type::RGBAColor(0,1,0,1));
-            vparams->drawTool()->drawArrow(m_pairs[i].second->getPosition(), m_pairs[i].second->getPosition() - m_vecNormals[i].getDirs()[1] * scale, scale * 0.1, type::RGBAColor(0,1,0,1));
-        }
-
-        if (m_vecNormals[i].size()>2) {
-            vparams->drawTool()->drawArrow(m_pairs[i].first->getPosition(), m_pairs[i].first->getPosition() + m_vecNormals[i].getDirs()[2] * scale, scale * 0.1, type::RGBAColor(0,0,1,1));
-            vparams->drawTool()->drawArrow(m_pairs[i].second->getPosition(), m_pairs[i].second->getPosition() - m_vecNormals[i].getDirs()[2] * scale, scale * 0.1, type::RGBAColor(0,0,1,1));
+    void draw(const core::visual::VisualParams* vparams, double scale) const {
+        for (unsigned i = 0; i < m_vecNormals.size(); i++) {
+            draw(vparams, scale, i);
         }
     }
 
+    void draw(const core::visual::VisualParams* vparams, double scale, unsigned i) const {
+        if (m_vecNormals[i].size() > 0) {
+            vparams->drawTool()->drawArrow(m_pairs[i].first->getPosition(),
+                                           m_pairs[i].first->getPosition() + m_vecNormals[i].getDirs()[0] * scale,
+                                           scale * 0.1, type::RGBAColor(1, 0, 0, 1));
+            vparams->drawTool()->drawArrow(m_pairs[i].second->getPosition(),
+                                           m_pairs[i].second->getPosition() - m_vecNormals[i].getDirs()[0] * scale,
+                                           scale * 0.1, type::RGBAColor(1, 0, 0, 1));
+        }
 
-    const std::vector<ConstraintNormal> & getConstraintNormal() const {
+        if (m_vecNormals[i].size() > 1) {
+            vparams->drawTool()->drawArrow(m_pairs[i].first->getPosition(),
+                                           m_pairs[i].first->getPosition() + m_vecNormals[i].getDirs()[1] * scale,
+                                           scale * 0.1, type::RGBAColor(0, 1, 0, 1));
+            vparams->drawTool()->drawArrow(m_pairs[i].second->getPosition(),
+                                           m_pairs[i].second->getPosition() - m_vecNormals[i].getDirs()[1] * scale,
+                                           scale * 0.1, type::RGBAColor(0, 1, 0, 1));
+        }
+
+        if (m_vecNormals[i].size() > 2) {
+            vparams->drawTool()->drawArrow(m_pairs[i].first->getPosition(),
+                                           m_pairs[i].first->getPosition() + m_vecNormals[i].getDirs()[2] * scale,
+                                           scale * 0.1, type::RGBAColor(0, 0, 1, 1));
+            vparams->drawTool()->drawArrow(m_pairs[i].second->getPosition(),
+                                           m_pairs[i].second->getPosition() - m_vecNormals[i].getDirs()[2] * scale,
+                                           scale * 0.1, type::RGBAColor(0, 0, 1, 1));
+        }
+    }
+
+    const std::vector<ConstraintNormal>& getConstraintNormal() const {
         return m_vecNormals;
     }
 
+    unsigned getPairSize() const override {
+        return m_pairs.size();
+    }
 
-    unsigned getPairSize() const override { return m_pairs.size(); }
+    collisionalgorithm::BaseBaseProximity::SPtr getFirstPair(unsigned i) const override {
+        return m_pairs[i].first;
+    }
 
-    collisionalgorithm::BaseBaseProximity::SPtr getFirstPair(unsigned i) const override { return m_pairs[i].first; }
+    collisionalgorithm::BaseBaseProximity::SPtr getSecondPair(unsigned i) const override {
+        return m_pairs[i].second;
+    }
 
-    collisionalgorithm::BaseBaseProximity::SPtr getSecondPair(unsigned i) const override { return m_pairs[i].second; }
-
-    const std::vector<std::pair<const typename FIRST::SPtr, const typename SECOND::SPtr>> & getPairs() const {
+    const std::vector<std::pair<const typename FIRST::SPtr, const typename SECOND::SPtr>>& getPairs() const {
         return m_pairs;
     }
 
     unsigned size() const override {
-        unsigned lcid=0;
-        for(unsigned i=0; i<m_vecNormals.size(); i++) {
+        unsigned lcid = 0;
+        for (unsigned i = 0; i < m_vecNormals.size(); i++) {
             lcid += m_vecNormals[i].size();
         }
         return lcid;
@@ -230,14 +239,15 @@ public :
 
     void toString(std::ostream& out) const override {
         out << "(" << m_cid << ") : ";
-        for (unsigned i=0;i<m_pairs.size();i++) {
-            if (m_pairs.size()>1) out << "<";
+        for (unsigned i = 0; i < m_pairs.size(); i++) {
+            if (m_pairs.size() > 1) out << "<";
             out << sofa::helper::NameDecoder::decodeFullName(m_pairs[i].first->getTypeInfo()) << "    ---   "
-                << sofa::helper::NameDecoder::decodeFullName(m_pairs[i].second->getTypeInfo()) << std::endl;;
+                << sofa::helper::NameDecoder::decodeFullName(m_pairs[i].second->getTypeInfo()) << std::endl;
+            ;
             out << "  - " << m_pairs[i].first->getPosition() << std::endl;
             out << "  - " << m_pairs[i].second->getPosition() << std::endl;
 
-            if (m_pairs.size()>1) out << ">" << std::endl;
+            if (m_pairs.size() > 1) out << ">" << std::endl;
         }
     }
 
@@ -250,13 +260,12 @@ public :
     }
 
     void scale(double s) override {
-        for (unsigned i=0; i<m_vecNormals.size(); i++) m_vecNormals[i].scale(s);
+        for (unsigned i = 0; i < m_vecNormals.size(); i++) m_vecNormals[i].scale(s);
     }
 
-    void operator=(const InternalConstraint & c) {
+    void operator=(const InternalConstraint& c) {
         m_pairs.clear();
-        for (unsigned i=0;i<c.m_pairs.size();i++)
-            m_pairs.push_back(c.m_pairs[i]);
+        for (unsigned i = 0; i < c.m_pairs.size(); i++) m_pairs.push_back(c.m_pairs[i]);
 
         m_vecNormals = c.m_vecNormals;
         m_creator = c.m_creator;
@@ -268,27 +277,35 @@ public :
         m_normalFunc = c.m_normalFunc;
     }
 
-    friend inline std::istream& operator >> ( std::istream& in, std::vector<typename sofa::constraintgeometry::InternalConstraint<FIRST,SECOND>::SPtr> &) {
+    friend inline std::istream& operator>>(
+        std::istream& in, std::vector<typename sofa::constraintgeometry::InternalConstraint<FIRST, SECOND>::SPtr>&) {
         return in;
     }
 
-
-    friend inline std::ostream& operator << (std::ostream& out, const std::vector<typename sofa::constraintgeometry::InternalConstraint<FIRST,SECOND>::SPtr> & v) {
-        for (unsigned i=0;i<v.size();i++) {
-            if (v.size()>1) out << "[";
+    friend inline std::ostream& operator<<(
+        std::ostream& out,
+        const std::vector<typename sofa::constraintgeometry::InternalConstraint<FIRST, SECOND>::SPtr>& v) {
+        for (unsigned i = 0; i < v.size(); i++) {
+            if (v.size() > 1) out << "[";
             v[i]->toString(out);
-            if (v.size()>1) out << "]" << std::endl;
+            if (v.size() > 1) out << "]" << std::endl;
         }
         return out;
     }
 
-    NormalsFunc getNormalFunc() { return m_normalFunc; }
+    NormalsFunc getNormalFunc() {
+        return m_normalFunc;
+    }
 
-    NormalsFunc getViolationFunc() { return m_violationFunc; }
+    NormalsFunc getViolationFunc() {
+        return m_violationFunc;
+    }
 
-    const std::vector<std::pair<const typename FIRST::SPtr, const typename SECOND::SPtr>> & getPairs() { return m_pairs; }
+    const std::vector<std::pair<const typename FIRST::SPtr, const typename SECOND::SPtr>>& getPairs() {
+        return m_pairs;
+    }
 
- protected:
+protected:
     std::vector<std::pair<const typename FIRST::SPtr, const typename SECOND::SPtr>> m_pairs;
 
     std::vector<ConstraintNormal> m_vecNormals;
@@ -301,4 +318,4 @@ public :
     NormalsFunc m_normalFunc;
 };
 
-}
+}  // namespace sofa::constraintgeometry

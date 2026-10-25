@@ -1,9 +1,13 @@
 #pragma once
 
 #include <CollisionAlgorithm/BaseGeometry.h>
+#include <CollisionAlgorithm/elements/PointElement.h>
 #include <CollisionAlgorithm/proximity/PointProximity.h>
 #include <ConstraintGeometry/BaseNormalHandler.h>
 #include <ConstraintGeometry/ConstraintProximity.h>
+
+#include <cmath>
+#include <limits>
 
 namespace sofa::constraintgeometry {
 
@@ -25,10 +29,14 @@ public:
 
     void prepareDetection() override {
         m_gcenter = type::Vec3();
+        if (l_geometry == nullptr) return;
 
         unsigned nbPoints = 0;
         for (auto it = l_geometry->pointBegin(); it != l_geometry->end(); it++) {
-            m_gcenter += it->element()->pointElements()[0]->getP0()->getPosition();
+            auto point = std::dynamic_pointer_cast<collisionalgorithm::PointElement>(it->element());
+            if (point == nullptr || point->getP0() == nullptr) continue;
+
+            m_gcenter += point->getP0()->getPosition();
             nbPoints++;
         }
 
@@ -46,7 +54,7 @@ public:
     static inline ConstraintProximity::SPtr buildCstProximity(GravityPointNormalHandler* handler,
                                                               typename PROXIMITY::SPtr prox) {
         return TConstraintProximity<PROXIMITY>::create(
-            prox, std::bind(&GravityPointNormalHandler::getNormal<PROXIMITY>, handler, std::placeholders::_1));
+            prox, [handler](const typename PROXIMITY::SPtr& p) { return handler->getNormal<PROXIMITY>(p); });
     }
 
 private:
@@ -56,8 +64,12 @@ private:
 template <>
 inline type::Vec3 GravityPointNormalHandler::getNormal<collisionalgorithm::PointProximity>(
     const collisionalgorithm::PointProximity::SPtr& prox) {
-    type::Vec3 N = (prox->getPosition() - m_gcenter).normalized();
-    return N;
+    if (prox == nullptr) return type::Vec3();
+
+    const type::Vec3 direction = prox->getPosition() - m_gcenter;
+    if (direction.norm() <= std::numeric_limits<double>::epsilon()) return type::Vec3();
+
+    return direction.normalized();
 }
 
 }  // namespace sofa::constraintgeometry

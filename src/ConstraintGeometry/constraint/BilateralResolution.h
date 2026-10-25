@@ -4,6 +4,9 @@
 #include <ConstraintGeometry/directions/BindDirection.h>
 #include <sofa/core/behavior/ConstraintResolution.h>
 
+#include <cmath>
+#include <limits>
+
 namespace sofa {
 
 namespace constraintgeometry {
@@ -17,8 +20,11 @@ public:
         m_compliance = comp1;
     }
 
-    virtual void resolution(int line, double** w, double* d, double* force, double* /*dFree*/) {
-        force[line] -= d[line] / (w[line][line] + m_compliance);
+    virtual void resolution(int line, double** w, double* d, double* force, double* /*dFree*/) override {
+        const double denom = w[line][line] + m_compliance;
+        if (std::abs(denom) <= std::numeric_limits<double>::epsilon()) return;
+
+        force[line] -= d[line] / denom;
         if (force[line] > m_maxForce) force[line] = m_maxForce;
         if (force[line] < -m_maxForce) force[line] = -m_maxForce;
     }
@@ -40,7 +46,7 @@ public:
         m_compliance[1] = comp2;
     }
 
-    virtual void init(int line, double** w, double* /*force*/) {
+    virtual void init(int line, double** w, double* /*force*/) override {
         sofa::type::Mat<2, 2, double> temp;
         for (unsigned j = 0; j < 2; j++) {
             for (unsigned i = 0; i < 2; i++) {
@@ -50,10 +56,16 @@ public:
             }
         }
 
-        SOFA_UNUSED(sofa::type::invertMatrix(invW, temp));
+        if (!sofa::type::invertMatrix(invW, temp)) {
+            // Fallback to a diagonal approximation if the compliance matrix is singular.
+            invW = sofa::type::Mat<2, 2, double>();
+            for (unsigned i = 0; i < 2; i++) {
+                if (std::abs(temp[i][i]) > std::numeric_limits<double>::epsilon()) invW[i][i] = 1.0 / temp[i][i];
+            }
+        }
     }
 
-    virtual void resolution(int line, double** /*w*/, double* d, double* force, double* /*dFree*/) {
+    virtual void resolution(int line, double** /*w*/, double* d, double* force, double* /*dFree*/) override {
         for (int i = 0; i < 2; i++) {
             for (int j = 0; j < 2; j++) force[line + i] -= d[line + j] * invW[i][j];
         }
@@ -87,7 +99,7 @@ public:
         m_compliance[2] = comp3;
     }
 
-    virtual void init(int line, double** w, double* /*force*/) {
+    virtual void init(int line, double** w, double* /*force*/) override {
         sofa::type::Mat<3, 3, double> temp;
         for (unsigned j = 0; j < 3; j++) {
             for (unsigned i = 0; i < 3; i++) {
@@ -97,10 +109,16 @@ public:
             }
         }
 
-        SOFA_UNUSED(sofa::type::invertMatrix(invW, temp));
+        if (!sofa::type::invertMatrix(invW, temp)) {
+            // Fallback to a diagonal approximation if the compliance matrix is singular.
+            invW = sofa::type::Mat<3, 3, double>();
+            for (unsigned i = 0; i < 3; i++) {
+                if (std::abs(temp[i][i]) > std::numeric_limits<double>::epsilon()) invW[i][i] = 1.0 / temp[i][i];
+            }
+        }
     }
 
-    virtual void resolution(int line, double** /*w*/, double* d, double* force, double* /*dFree*/) {
+    virtual void resolution(int line, double** /*w*/, double* d, double* force, double* /*dFree*/) override {
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) force[line + i] -= d[line + j] * invW[i][j];
         }

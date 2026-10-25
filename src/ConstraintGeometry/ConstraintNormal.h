@@ -5,6 +5,12 @@
 #include <sofa/defaulttype/VecTypes.h>
 #include <sofa/type/vector.h>
 
+#include <algorithm>
+#include <cmath>
+#include <functional>
+#include <limits>
+#include <utility>
+
 namespace sofa::constraintgeometry {
 
 /*!
@@ -21,6 +27,8 @@ public:
 
     static double defaultViolationFunction(const typename FIRST::SPtr &first, const typename SECOND::SPtr &second,
                                            const type::Vec3 &normal) {
+        if (first == nullptr || second == nullptr) return 0.0;
+
         const type::Vec3 &PFree = first->getPosition(core::vec_id::write_access::freePosition);
         const type::Vec3 &QFree = second->getPosition(core::vec_id::write_access::freePosition);
 
@@ -28,8 +36,9 @@ public:
     }
 
     static inline ViolationFunction getViolationFunc() {
-        return std::bind(&ConstraintNormal::defaultViolationFunction, std::placeholders::_1, std::placeholders::_2,
-                         std::placeholders::_3);
+        return [](const typename FIRST::SPtr &first, const typename SECOND::SPtr &second, const type::Vec3 &normal) {
+            return defaultViolationFunction(first, second, normal);
+        };
     }
 
     ConstraintNormal() {
@@ -41,13 +50,14 @@ public:
     }
 
     ConstraintNormal(const type::Vec3 &N, ViolationFunction f = getViolationFunc()) {
-        m_dirs.push_back(N.normalized());
-        m_functions.push_back(f);
+        add(N, std::move(f));
     }
 
     ConstraintNormal &add(const type::Vec3 &N, ViolationFunction f = getViolationFunc()) {
+        if (!isValidDirection(N)) return *this;
+
         m_dirs.push_back(N.normalized());
-        m_functions.push_back(f);
+        m_functions.push_back(std::move(f));
         return *this;
     }
 
@@ -58,9 +68,7 @@ public:
 
     ConstraintNormal &addOrthogonalDirection(ViolationFunction f = getViolationFunc()) {
         if (m_dirs.size() == 0) {
-            m_dirs.push_back(type::Vec3(1, 0, 0));
-            m_functions.push_back(f);
-            return *this;
+            return add(type::Vec3(1, 0, 0), std::move(f));
         } else if (m_dirs.size() == 1) {
             // gram schmidt orthogonalization
             type::Vec3 gramm_schmidt = type::Vec3(0, 0, 1) - m_dirs[0] * dot(m_dirs[0], type::Vec3(0, 0, 1));
@@ -69,13 +77,9 @@ public:
             if (gramm_schmidt.norm() < std::numeric_limits<double>::epsilon())
                 gramm_schmidt = type::Vec3(0, 1, 0) - m_dirs[0] * dot(m_dirs[0], type::Vec3(0, 1, 0));
 
-            m_dirs.push_back(gramm_schmidt.normalized());
-            m_functions.push_back(f);
-            return *this;
+            return add(gramm_schmidt, std::move(f));
         } else if (m_dirs.size() == 2) {
-            m_dirs.push_back(cross(m_dirs[0], m_dirs[1]).normalized());
-            m_functions.push_back(f);
-            return *this;
+            return add(cross(m_dirs[0], m_dirs[1]), std::move(f));
         } else {
             std::cerr << "Cannot add orthogonal direction for more than 3 constraints " << std::endl;
         }
@@ -85,7 +89,8 @@ public:
 
     void computeViolations(unsigned cid, const typename FIRST::SPtr &first, const typename SECOND::SPtr &second,
                            linearalgebra::BaseVector *delta) const {
-        for (unsigned i = 0; i < m_dirs.size(); i++) {
+        const unsigned count = std::min<unsigned>(m_dirs.size(), m_functions.size());
+        for (unsigned i = 0; i < count; i++) {
             double v = m_functions[i](first, second, m_dirs[i]);
             delta->set(cid + i, v);
         }
@@ -110,14 +115,19 @@ public:
     }
 
     void setDir(unsigned i, const type::Vec3 &n) {
-        m_dirs[i] = n.normalized();
+        if (i < m_dirs.size() && isValidDirection(n)) m_dirs[i] = n.normalized();
     }
 
     ViolationFunction getViolationFunc(unsigned i) {
-        return m_functions[i];
+        if (i < m_functions.size()) return m_functions[i];
+        return getViolationFunc();
     }
 
 protected:
+    static bool isValidDirection(const type::Vec3 &n) {
+        return n.norm() > std::numeric_limits<double>::epsilon();
+    }
+
     // pai of directions (vec3) and function to compute the violation of a par proximity
     sofa::type::vector<type::Vec3> m_dirs;
     sofa::type::vector<ViolationFunction> m_functions;

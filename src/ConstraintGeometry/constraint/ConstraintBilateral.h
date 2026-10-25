@@ -23,7 +23,8 @@ public:
           l_directions(initLink("directions", "link to the default direction")) {
     }
 
-    void init() {  // make sure we have a direction
+    void init() override {  // make sure we have a direction
+        BaseConstraint::init();
         if (l_directions == NULL) {
             msg_error(this) << "Error you must provide the directions to solve the constraints ";
         } else
@@ -36,7 +37,7 @@ public:
         return l_directions->createConstraintsNormal(first, second);
     }
 
-    core::behavior::ConstraintResolution* createConstraintResolution(const BaseInternalConstraint* cst) const {
+    core::behavior::ConstraintResolution* createConstraintResolution(const BaseInternalConstraint* cst) const override {
         if (cst->size() == 1) {
             double maxf = std::numeric_limits<double>::max();
             double comp = 0.0;

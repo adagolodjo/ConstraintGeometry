@@ -3,6 +3,9 @@
 #include <ConstraintGeometry/BaseNormalHandler.h>
 #include <ConstraintGeometry/ConstraintDirection.h>
 
+#include <cmath>
+#include <limits>
+
 namespace sofa::constraintgeometry {
 
 /*!
@@ -31,9 +34,11 @@ public:
      */
     ConstraintNormal createConstraintsNormal(const BaseProximity::SPtr& first,
                                              const BaseProximity::SPtr& second) const override {
-        if (l_handler == NULL) return ConstraintNormal();
+        if (l_handler == NULL || first == nullptr || second == nullptr) return ConstraintNormal();
 
-        type::Vec3 mainDir = (first->getPosition() - second->getPosition()).normalized();
+        const type::Vec3 delta = first->getPosition() - second->getPosition();
+        type::Vec3 mainDir = delta.normalized();
+        if (mainDir.norm() <= std::numeric_limits<double>::epsilon()) mainDir = type::Vec3();
 
         const ConstraintProximity::SPtr& cp = l_handler->createConstraintProximity(second);
         if (cp == NULL) {
@@ -42,7 +47,9 @@ public:
         }
 
         type::Vec3 secondDir = -cp->getNormal();
-        if (dot(mainDir, secondDir) <= std::numeric_limits<double>::epsilon()) {
+        if (mainDir.norm() <= std::numeric_limits<double>::epsilon()) {
+            mainDir = secondDir;
+        } else if (dot(mainDir, secondDir) <= std::numeric_limits<double>::epsilon()) {
             mainDir = secondDir;
         }
 

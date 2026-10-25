@@ -130,7 +130,7 @@ public:
         }
     }
 
-    void getConstraintViolation(linearalgebra::BaseVector* v) const {
+    void getConstraintViolation(linearalgebra::BaseVector* v) const override {
         m_violationFunc(this, v);
     }
 
@@ -138,7 +138,7 @@ public:
      * \brief createConstraintResolution, creates ConstraintResolution using creator's factory
      * \return ConstraintResolution*
      */
-    core::behavior::ConstraintResolution* createConstraintResolution() const {
+    core::behavior::ConstraintResolution* createConstraintResolution() const override {
         return m_creator(this);
     }
 
@@ -149,7 +149,7 @@ public:
      * \param lambda
      */
     void storeLambda(const core::ConstraintParams* cParams, core::MultiVecDerivId res,
-                     const sofa::linearalgebra::BaseVector* lambda) const {
+                     const sofa::linearalgebra::BaseVector* lambda) const override {
         unsigned int lcid = m_cid;
         for (unsigned k = 0; k < m_vecNormals.size(); k++) {
             for (unsigned i = 0; i < m_vecNormals[k].size(); i++) {
@@ -170,7 +170,7 @@ public:
         return lambda->element(m_cid + id);
     }
 
-    void draw(const core::visual::VisualParams* vparams, double scale) const {
+    void draw(const core::visual::VisualParams* vparams, double scale) const override {
         for (unsigned i = 0; i < m_vecNormals.size(); i++) {
             draw(vparams, scale, i);
         }
@@ -205,7 +205,7 @@ public:
         }
     }
 
-    const std::vector<ConstraintNormal>& getConstraintNormal() const {
+    const std::vector<ConstraintNormal>& getConstraintNormal() const override {
         return m_vecNormals;
     }
 
@@ -214,10 +214,12 @@ public:
     }
 
     collisionalgorithm::BaseBaseProximity::SPtr getFirstPair(unsigned i) const override {
+        if (i >= m_pairs.size()) return nullptr;
         return m_pairs[i].first;
     }
 
     collisionalgorithm::BaseBaseProximity::SPtr getSecondPair(unsigned i) const override {
+        if (i >= m_pairs.size()) return nullptr;
         return m_pairs[i].second;
     }
 
@@ -243,7 +245,6 @@ public:
             if (m_pairs.size() > 1) out << "<";
             out << sofa::helper::NameDecoder::decodeFullName(m_pairs[i].first->getTypeInfo()) << "    ---   "
                 << sofa::helper::NameDecoder::decodeFullName(m_pairs[i].second->getTypeInfo()) << std::endl;
-            ;
             out << "  - " << m_pairs[i].first->getPosition() << std::endl;
             out << "  - " << m_pairs[i].second->getPosition() << std::endl;
 
@@ -264,6 +265,8 @@ public:
     }
 
     void operator=(const InternalConstraint& c) {
+        if (this == &c) return;
+
         m_pairs.clear();
         for (unsigned i = 0; i < c.m_pairs.size(); i++) m_pairs.push_back(c.m_pairs[i]);
 

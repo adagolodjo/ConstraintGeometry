@@ -43,13 +43,26 @@ public:
         if (l_directions == NULL) return ConstraintNormal();
 
         ConstraintNormal CN = l_directions->createConstraintsNormal(first, second);
+        if (CN.size() == 0) return CN;
 
         if (d_friction.getValue() != 0.0) {
             CN.addOrthogonalDirection();
             CN.addOrthogonalDirection();
+
+            // The friction resolution expects exactly three directions.
+            if (CN.size() != 3) return ConstraintNormal();
         }
 
         return CN;
+    }
+
+    void init() override {
+        BaseConstraint::init();
+        if (l_directions == NULL) {
+            msg_error(this) << "Error you must provide the directions to solve the constraints ";
+        } else {
+            this->addSlave(l_directions.get());
+        }
     }
 
     /*!

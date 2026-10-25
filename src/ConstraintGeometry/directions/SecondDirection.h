@@ -31,11 +31,11 @@ public:
      */
     ConstraintNormal createConstraintsNormal(const BaseProximity::SPtr&,
                                              const BaseProximity::SPtr& second) const override {
-        if (l_handler == NULL) return ConstraintNormal();
+        if (l_handler == NULL || second == nullptr) return ConstraintNormal();
 
         const ConstraintProximity::SPtr& cp = l_handler->createConstraintProximity(second);
         if (cp == NULL) {
-            std::cerr << "Error cannot create normal in ContactDirection " << std::endl;
+            std::cerr << "Error cannot create normal in SecondDirection " << std::endl;
             return ConstraintNormal();
         }
 

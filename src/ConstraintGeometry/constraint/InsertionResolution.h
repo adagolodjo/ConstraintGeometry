@@ -4,6 +4,10 @@
 #include <ConstraintGeometry/directions/BindDirection.h>
 #include <sofa/core/behavior/ConstraintResolution.h>
 
+#include <array>
+#include <cmath>
+#include <limits>
+
 namespace sofa {
 
 namespace constraintgeometry {
@@ -26,7 +30,7 @@ public:
         m_frictionCoeff = frictionCoeff;
     }
 
-    virtual void init(int line, double** w, double* /*force*/) {
+    virtual void init(int line, double** w, double* /*force*/) override {
         sofa::type::Mat<3, 3, double> temp;
         for (unsigned j = 0; j < 3; j++) {
             for (unsigned i = 0; i < 3; i++) {
@@ -36,10 +40,16 @@ public:
             }
         }
 
-        SOFA_UNUSED(sofa::type::invertMatrix(invW, temp));
+        if (!sofa::type::invertMatrix(invW, temp)) {
+            // Fallback to a diagonal approximation if the compliance matrix is singular.
+            invW = sofa::type::Mat<3, 3, double>();
+            for (unsigned i = 0; i < 3; i++) {
+                if (std::abs(temp[i][i]) > std::numeric_limits<double>::epsilon()) invW[i][i] = 1.0 / temp[i][i];
+            }
+        }
     }
 
-    virtual void resolution(int line, double** w, double* d, double* force, double* /*dFree*/) {
+    virtual void resolution(int line, double** w, double* d, double* force, double* /*dFree*/) override {
         std::array<SReal, 3> corr = {0.0, 0.0, 0.0};
 
         for (int j = 0; j < 3; j++) corr[0] -= invW[0][j] * d[line + j];
@@ -51,15 +61,20 @@ public:
 
         constexpr SReal epsilon = 1e-12;
         if (std::abs(denom) < epsilon) {
-            // Fallback for singular/near-singular matrix: use pseudo-inverse
-            corr[1] = -d[line + 1] / (w[line + 1][line + 1] + epsilon);
-            corr[2] = -d[line + 2] / (w[line + 2][line + 2] + epsilon);
+            // Fallback for singular/near-singular matrix: use the diagonal terms.
+            const SReal w11 = w[line + 1][line + 1];
+            const SReal w22 = w[line + 2][line + 2];
+            corr[1] = (std::abs(w11) > epsilon) ? -d[line + 1] / (w11 + epsilon) : 0.0;
+            corr[2] = (std::abs(w22) > epsilon) ? -d[line + 2] / (w22 + epsilon) : 0.0;
         } else {
             const SReal nom1 = w[line + 1][line + 2] * (d[line + 2] + w[line + 2][line + 0] * corr[0]);
             const SReal nom2 = w[line + 2][line + 2] * (d[line + 1] + w[line + 1][line + 0] * corr[0]);
             corr[1] = (nom1 - nom2) / denom;
-            corr[2] = -(d[line + 2] + w[line + 2][line + 0] * corr[0] + w[line + 2][line + 1] * corr[1]) /
-                      w[line + 2][line + 2];
+
+            const SReal w22 = w[line + 2][line + 2];
+            corr[2] = (std::abs(w22) > epsilon)
+                          ? -(d[line + 2] + w[line + 2][line + 0] * corr[0] + w[line + 2][line + 1] * corr[1]) / w22
+                          : 0.0;
         }
 
         for (int i = 0; i < 3; i++) force[line + i] += corr[i];

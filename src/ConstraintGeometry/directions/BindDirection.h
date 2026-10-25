@@ -17,6 +17,7 @@ public:
      */
     ConstraintNormal createConstraintsNormal(const BaseProximity::SPtr& first,
                                              const BaseProximity::SPtr& second) const override {
+        if (first == nullptr || second == nullptr) return ConstraintNormal();
         return ConstraintNormal(first->getPosition() - second->getPosition());
     }
 };

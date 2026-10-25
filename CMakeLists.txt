@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 project(ConstraintGeometry VERSION 0.1 LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -46,7 +46,25 @@ set(HEADER_FILES
 
         ${CONSTRAINTGEOMETRY_SRC}/operations/ConstraintProximityOperation.h
 )
-file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS "${CONSTRAINTGEOMETRY_SRC}/*.cpp")
+set(SOURCE_FILES
+    ${CONSTRAINTGEOMETRY_SRC}/initConstraintGeometry.cpp
+
+    ${CONSTRAINTGEOMETRY_SRC}/constraint/ConstraintBilateral.cpp
+    ${CONSTRAINTGEOMETRY_SRC}/constraint/ConstraintInsertion.cpp
+    ${CONSTRAINTGEOMETRY_SRC}/constraint/ConstraintUnilateral.cpp
+
+    ${CONSTRAINTGEOMETRY_SRC}/directions/BindDirection.cpp
+    ${CONSTRAINTGEOMETRY_SRC}/directions/ContactDirection.cpp
+    ${CONSTRAINTGEOMETRY_SRC}/directions/FirstDirection.cpp
+    ${CONSTRAINTGEOMETRY_SRC}/directions/FixedFrameDirection.cpp
+    ${CONSTRAINTGEOMETRY_SRC}/directions/SecondDirection.cpp
+
+    ${CONSTRAINTGEOMETRY_SRC}/normalHandler/EdgeNormalHandler.cpp
+    ${CONSTRAINTGEOMETRY_SRC}/normalHandler/GouraudTriangleNormalHandler.cpp
+    ${CONSTRAINTGEOMETRY_SRC}/normalHandler/GravityPointNormalHandler.cpp
+    ${CONSTRAINTGEOMETRY_SRC}/normalHandler/PhongTriangleNormalHandler.cpp
+    ${CONSTRAINTGEOMETRY_SRC}/normalHandler/VectorPointNormalHandler.cpp
+)
 
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES} ${HEADER_FILES})
 
@@ -69,12 +87,16 @@ sofa_create_package_with_targets(
     TARGETS ${PROJECT_NAME} AUTO_SET_TARGET_PROPERTIES
     INCLUDE_SOURCE_DIR "src"
     INCLUDE_INSTALL_DIR ${PROJECT_NAME}
-    EXAMPLE_INSTALL_DIR "scenes"
+    EXAMPLE_INSTALL_DIR "examples"
     RELOCATABLE "plugins"
 )
 
-# enable_testing()
+enable_testing()
 
-# if(SOFA_BUILD_TESTS)
-#    add_subdirectory(tests/unit)
-#endif()
+# If SOFA_BUILD_TESTS exists and is OFF, then the plugin tests are auto-disabled.
+# Otherwise (standalone build), the tests are built by default.
+cmake_dependent_option(CONSTRAINTGEOMETRY_BUILD_TESTS "Compile the automatic tests" ON
+    "SOFA_BUILD_TESTS OR NOT DEFINED SOFA_BUILD_TESTS" OFF)
+if(CONSTRAINTGEOMETRY_BUILD_TESTS)
+    add_subdirectory(tests/unit)
+endif()

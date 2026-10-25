@@ -5,6 +5,9 @@
 #include <ConstraintGeometry/BaseNormalHandler.h>
 #include <ConstraintGeometry/ConstraintProximity.h>
 
+#include <cmath>
+#include <limits>
+
 namespace sofa::constraintgeometry {
 
 class SOFA_CONSTRAINTGEOMETRY_API EdgeNormalHandler : public BaseNormalHandler {
@@ -36,14 +39,22 @@ public:
     static inline ConstraintProximity::SPtr buildCstProximity(EdgeNormalHandler* handler,
                                                               typename PROXIMITY::SPtr prox) {
         return TConstraintProximity<PROXIMITY>::create(
-            prox, std::bind(&EdgeNormalHandler::getNormal<PROXIMITY>, handler, std::placeholders::_1));
+            prox, [handler](const typename PROXIMITY::SPtr& p) { return handler->getNormal<PROXIMITY>(p); });
     }
 };
 
 template <>
 type::Vec3 EdgeNormalHandler::getNormal<collisionalgorithm::EdgeProximity>(
     const collisionalgorithm::EdgeProximity::SPtr& prox) {
-    return (prox->element()->getP1()->getPosition() - prox->element()->getP0()->getPosition()).normalized();
+    if (prox == nullptr || prox->element() == nullptr) return type::Vec3();
+
+    const auto element = prox->element();
+    if (element->getP0() == nullptr || element->getP1() == nullptr) return type::Vec3();
+
+    const type::Vec3 direction = element->getP1()->getPosition() - element->getP0()->getPosition();
+    if (direction.norm() <= std::numeric_limits<double>::epsilon()) return type::Vec3();
+
+    return direction.normalized();
 }
 
 }  // namespace sofa::constraintgeometry

@@ -4,6 +4,9 @@
 #include <ConstraintGeometry/directions/ContactDirection.h>
 #include <sofa/core/behavior/ConstraintResolution.h>
 
+#include <cmath>
+#include <limits>
+
 namespace sofa {
 
 namespace constraintgeometry {
@@ -29,8 +32,11 @@ public:
      * \param d
      * \param force
      */
-    virtual void resolution(int line, double** w, double* d, double* force, double* /*dFree*/) {
-        force[line] -= d[line] / w[line][line];
+    virtual void resolution(int line, double** w, double* d, double* force, double* /*dFree*/) override {
+        const double denom = w[line][line];
+        if (std::abs(denom) <= std::numeric_limits<double>::epsilon()) return;
+
+        force[line] -= d[line] / denom;
 
         if (force[line] > m_maxForce)
             force[line] = m_maxForce;
@@ -57,15 +63,18 @@ public:
           m_friction(f) {
     }
 
-    virtual void resolution(int line, double** w, double* d, double* force, double* /*dFree*/) {
+    virtual void resolution(int line, double** w, double* d, double* force, double* /*dFree*/) override {
+        constexpr double epsilon = std::numeric_limits<double>::epsilon();
+
         // we solve the first constraint as if there was no friction
-        double inv;
-        inv = 1.0 / (w[line][line]);
-        double corr0 = -inv * d[line + 0];
+        if (std::abs(w[line][line]) <= epsilon) return;
+
+        const double inv0 = 1.0 / w[line][line];
+        const double corr0 = -inv0 * d[line + 0];
         force[line + 0] += corr0;
 
         // we check unilateral conditions
-        if (force[line] < 0) {
+        if (force[line + 0] < 0) {
             force[line + 0] = 0.0;
             force[line + 1] = 0.0;
             force[line + 2] = 0.0;
@@ -73,21 +82,23 @@ public:
         }
 
         // we clamp the force is needed
-        if (force[line] > m_maxForce0) force[line] = m_maxForce0;
+        if (force[line + 0] > m_maxForce0) force[line + 0] = m_maxForce0;
 
         // now we compute tangential forces
+        double corr1 = 0.0;
+        if (std::abs(w[line + 1][line + 1]) > epsilon) {
+            d[line + 1] += w[line + 1][line + 0] * corr0;
+            corr1 = -d[line + 1] / w[line + 1][line + 1];
+            force[line + 1] += corr1;
+        }
 
-        d[line + 1] += w[line + 1][line + 0] * corr0;
-        inv = 1.0 / (w[line + 1][line + 1]);
-        double corr1 = -inv * d[line + 1];
-        force[line + 1] += corr1;
+        if (std::abs(w[line + 2][line + 2]) > epsilon) {
+            d[line + 2] += w[line + 2][line + 0] * corr0 + w[line + 2][line + 1] * corr1;
+            const double corr2 = -d[line + 2] / w[line + 2][line + 2];
+            force[line + 2] += corr2;
+        }
 
-        d[line + 2] += w[line + 2][line + 0] * corr0 + w[line + 2][line + 1] * corr1;
-        inv = 1.0 / (w[line + 2][line + 2]);
-        double corr2 = -inv * d[line + 2];
-        force[line + 2] += corr2;
-
-        double slip_force = force[line + 0] * m_friction;
+        const double slip_force = force[line + 0] * m_friction;
 
         if (force[line + 1] > slip_force)
             force[line + 1] = slip_force;
@@ -99,8 +110,15 @@ public:
         else if (force[line + 2] < -slip_force)
             force[line + 2] = -slip_force;
 
-        if (force[line + 1] > m_maxForce1) force[line + 1] = m_maxForce1;
-        if (force[line + 2] > m_maxForce2) force[line + 2] = m_maxForce2;
+        if (force[line + 1] > m_maxForce1)
+            force[line + 1] = m_maxForce1;
+        else if (force[line + 1] < -m_maxForce1)
+            force[line + 1] = -m_maxForce1;
+
+        if (force[line + 2] > m_maxForce2)
+            force[line + 2] = m_maxForce2;
+        else if (force[line + 2] < -m_maxForce2)
+            force[line + 2] = -m_maxForce2;
     }
 
     double m_maxForce0, m_maxForce1, m_maxForce2;

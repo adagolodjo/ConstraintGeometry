@@ -1,9 +1,13 @@
 #pragma once
 
+#include <CollisionAlgorithm/elements/PointElement.h>
 #include <CollisionAlgorithm/proximity/MechanicalProximity.h>
 #include <CollisionAlgorithm/proximity/TriangleProximity.h>
 #include <ConstraintGeometry/BaseNormalHandler.h>
 #include <ConstraintGeometry/ConstraintProximity.h>
+
+#include <cmath>
+#include <limits>
 
 namespace sofa::constraintgeometry {
 
@@ -37,13 +41,14 @@ public:
     static inline ConstraintProximity::SPtr buildCstProximity(GouraudTriangleNormalHandler* handler,
                                                               typename PROXIMITY::SPtr prox) {
         return TConstraintProximity<PROXIMITY>::create(
-            prox, std::bind(&GouraudTriangleNormalHandler::getNormal<PROXIMITY>, handler, std::placeholders::_1));
+            prox, [handler](const typename PROXIMITY::SPtr& p) { return handler->getNormal<PROXIMITY>(p); });
     }
 };
 
 template <>
 inline type::Vec3 GouraudTriangleNormalHandler::getNormal<collisionalgorithm::TriangleProximity>(
     const collisionalgorithm::TriangleProximity::SPtr& prox) {
+    if (prox == nullptr || prox->element() == nullptr) return type::Vec3();
     return prox->element()->getTriangleInfo().N;
 }
 
@@ -51,14 +56,20 @@ template <>
 inline type::Vec3
 GouraudTriangleNormalHandler::getNormal<collisionalgorithm::MechanicalProximity<sofa::defaulttype::Vec3dTypes>>(
     const collisionalgorithm::MechanicalProximity<sofa::defaulttype::Vec3dTypes>::SPtr& prox) {
-    const collisionalgorithm::PointElement::SPtr& element = prox->getGeometry()->pointElements()[prox->getPId()];
+    if (prox == nullptr || prox->getGeometry() == nullptr) return type::Vec3();
+
+    const auto& points = prox->getGeometry()->pointElements();
+    if (prox->getPId() >= points.size()) return type::Vec3();
+
+    const collisionalgorithm::PointElement::SPtr& element = points[prox->getPId()];
+    if (element == nullptr) return type::Vec3();
 
     type::Vec3 N0_point;
     for (auto it = element->triangleAround().cbegin(); it != element->triangleAround().cend(); it++) {
-        N0_point += (*it)->getTriangleInfo().N;
-        break;
+        if (*it != nullptr) N0_point += (*it)->getTriangleInfo().N;
     }
 
+    if (N0_point.norm() <= std::numeric_limits<double>::epsilon()) return type::Vec3();
     return N0_point.normalized();
 }
 

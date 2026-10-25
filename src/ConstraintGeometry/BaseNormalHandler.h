@@ -20,7 +20,7 @@ public:
     typedef collisionalgorithm::BaseGeometry BaseGeometry;
     typedef collisionalgorithm::BaseProximity BaseProximity;
 
-    void init() {
+    void init() override {
         if (getGeometry() == NULL) {
             std::cerr << "Error cannot find the geometry" << std::endl;
             return;
@@ -34,13 +34,24 @@ public:
     virtual const std::type_info& getTypeInfo() = 0;
 
     virtual ConstraintProximity::SPtr createConstraintProximity(const BaseProximity::SPtr& prox) {
+        if (prox == nullptr) {
+            msg_error(this) << "Cannot create a constraint proximity from a null proximity";
+            return nullptr;
+        }
+
         ConstraintProximityOperation::FUNC operation =
             ConstraintProximityOperation::get(getTypeInfo(), prox->getTypeInfo());
-        return operation(this, prox);
+        ConstraintProximity::SPtr constraintProx = operation(this, prox);
+        if (constraintProx == nullptr) {
+            msg_error(this) << "No constraint proximity registered for the required proximity type";
+        }
+
+        return constraintProx;
     }
 
     void draw(const core::visual::VisualParams* vparams) override {
         if (!vparams->displayFlags().getShowNormals()) return;
+        if (getGeometry() == nullptr) return;
 
         type::RGBAColor color(1, 0, 0, 1);
         double scale = 1.0;
@@ -54,6 +65,7 @@ public:
         for (auto it = getGeometry()->pointBegin(); it != getGeometry()->end(); it++) {
             auto prox = operation(it->element());
             auto cp = createConstraintProximity(prox);
+            if (cp == nullptr) continue;
 
             vparams->drawTool()->drawArrow(cp->getPosition(), cp->getPosition() - cp->getNormal() * scale, scale * 0.1,
                                            color);

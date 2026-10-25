@@ -26,20 +26,37 @@ public:
           l_directions(initLink("directions", "link to the default direction")) {
     }
 
-    void init() {  // make sure we have a direction
+    void init() override {  // make sure we have a direction
+        BaseConstraint::init();
         if (l_directions == NULL) {
             msg_error(this) << "Error you must provide the directions to solve the constraints ";
         } else
             this->addSlave(l_directions.get());
     }
 
-    virtual ConstraintNormal createConstraintNormal(const BaseProximity::SPtr& first,
-                                                    const BaseProximity::SPtr& second) const override {
+    ConstraintNormal createConstraintNormal(const BaseProximity::SPtr& first,
+                                            const BaseProximity::SPtr& second) const override {
         if (l_directions == NULL) return ConstraintNormal();
-        return l_directions->createConstraintsNormal(first, second).addOrthogonalDirection().addOrthogonalDirection();
+
+        ConstraintNormal constraintNormal = l_directions->createConstraintsNormal(first, second);
+        if (constraintNormal.size() == 0) return constraintNormal;
+
+        while (constraintNormal.size() < 3) {
+            const unsigned previousSize = constraintNormal.size();
+            constraintNormal.addOrthogonalDirection();
+            if (constraintNormal.size() == previousSize) return ConstraintNormal();
+        }
+
+        return constraintNormal;
     }
 
-    core::behavior::ConstraintResolution* createConstraintResolution(const BaseInternalConstraint* cst) const {
+    core::behavior::ConstraintResolution* createConstraintResolution(const BaseInternalConstraint* cst) const override {
+        if (cst->size() != 3) {
+            std::cerr << "Error the size of the constraint is not correct in ConstraintInsertion size=" << cst->size()
+                      << std::endl;
+            return NULL;
+        }
+
         double maxf[3] = {std::numeric_limits<double>::max(), std::numeric_limits<double>::max(),
                           std::numeric_limits<double>::max()};
         double comp[3] = {0.0, 0.0, 0.0};
@@ -54,10 +71,6 @@ public:
 
         return new InsertionConstraintResolution(d_frictionCoeff.getValue(), maxf[0], maxf[1], maxf[2], comp[0],
                                                  comp[1], comp[2]);
-
-        std::cerr << "Error the size of the constraint is not correct in ConstraintInsertion size=" << cst->size()
-                  << std::endl;
-        return NULL;
     }
 
 protected:

@@ -40,7 +40,7 @@ public:
     static inline ConstraintProximity::SPtr buildCstProximity(VectorPointNormalHandler* handler,
                                                               typename PROXIMITY::SPtr prox) {
         return TConstraintProximity<PROXIMITY>::create(
-            prox, std::bind(&VectorPointNormalHandler::getNormal<PROXIMITY>, handler, std::placeholders::_1));
+            prox, [handler](const typename PROXIMITY::SPtr& p) { return handler->getNormal<PROXIMITY>(p); });
     }
 };
 
@@ -50,7 +50,7 @@ VectorPointNormalHandler::getNormal<collisionalgorithm::MechanicalProximity<sofa
     const collisionalgorithm::MechanicalProximity<sofa::defaulttype::Vec3dTypes>::SPtr& prox) {
     type::Vec3 N;
 
-    if (prox->getPId() >= d_normals.getValue().size()) {
+    if (prox == nullptr || prox->getPId() >= d_normals.getValue().size()) {
         std::cerr << "Wrong id in VectorPointNormalHandler" << std::endl;
         return N;
     }

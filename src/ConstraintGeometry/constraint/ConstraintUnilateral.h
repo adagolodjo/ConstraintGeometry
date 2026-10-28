@@ -19,6 +19,7 @@ public:
                SOFA_TEMPLATE2(TBaseConstraint, collisionalgorithm::BaseProximity, collisionalgorithm::BaseProximity));
 
     Data<double> d_friction;
+    Data<double> d_contactDistance;
     Data<double> d_maxforce0;
     Data<double> d_maxforce1;
     Data<double> d_maxforce2;
@@ -29,6 +30,9 @@ public:
 
     ConstraintUnilateral()
         : d_friction(initData(&d_friction, 0.0, "mu", "Friction")),
+          d_contactDistance(initData(&d_contactDistance, 0.0, "contactDistance",
+                                     "Thickness of the contact: the constraint is violated as soon as the gap along "
+                                     "the normal is smaller than this distance (e.g. radius of a rod)")),
           d_maxforce0(initData(&d_maxforce0, std::numeric_limits<double>::max(), "maxForce0",
                                "Max force applied on the first axis")),
           d_maxforce1(initData(&d_maxforce1, std::numeric_limits<double>::max(), "maxForce1",
@@ -44,6 +48,8 @@ public:
 
         ConstraintNormal CN = l_directions->createConstraintsNormal(first, second);
         if (CN.size() == 0) return CN;
+
+        CN.addViolationOffset(0, d_contactDistance.getValue());
 
         if (d_friction.getValue() != 0.0) {
             CN.addOrthogonalDirection();

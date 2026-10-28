@@ -123,6 +123,20 @@ public:
         return getViolationFunc();
     }
 
+    /// Replaces the violation function of direction i (ignored if i is out of range).
+    void setViolationFunc(unsigned i, ViolationFunction f) {
+        if (i < m_functions.size()) m_functions[i] = std::move(f);
+    }
+
+    /// Shifts the violation of direction i by -offset (a gap larger than offset is not a violation): used to give
+    /// a contact a thickness (e.g. the radius of a rod). Ignored if i is out of range or offset is 0.
+    void addViolationOffset(unsigned i, double offset) {
+        if (i >= m_functions.size() || offset == 0.0) return;
+        ViolationFunction previous = m_functions[i];
+        m_functions[i] = [previous, offset](const typename FIRST::SPtr &first, const typename SECOND::SPtr &second,
+                                            const type::Vec3 &normal) { return previous(first, second, normal) - offset; };
+    }
+
 protected:
     static bool isValidDirection(const type::Vec3 &n) {
         return n.norm() > std::numeric_limits<double>::epsilon();

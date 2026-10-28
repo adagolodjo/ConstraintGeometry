@@ -1,5 +1,7 @@
+#include <CollisionAlgorithm/proximity/FixedProximity.h>
 #include <ConstraintGeometry/ConstraintNormal.h>
 #include <gtest/gtest.h>
+#include <sofa/linearalgebra/FullVector.h>
 
 #include <cmath>
 
@@ -67,4 +69,47 @@ TEST(ConstraintNormalTest, CopyAndAssignmentPreserveDirections) {
     assigned = normal;
     ASSERT_EQ(assigned.size(), 1u);
     EXPECT_NEAR(assigned[0].norm(), 1.0, 1e-12);
+}
+
+TEST(ConstraintNormalTest, ViolationOffsetShiftsTheGapAlongTheDirection) {
+    using sofa::collisionalgorithm::FixedProximity;
+
+    // P is 5 above Q along +Z: with a contact thickness of 4.5 the gap is still open by 0.5
+    auto first = std::make_shared<FixedProximity>(Vec3(0, 0, 5));
+    auto second = std::make_shared<FixedProximity>(Vec3(0, 0, 0));
+
+    ConstraintNormal normal(Vec3(0, 0, 1));
+    sofa::linearalgebra::FullVector<double> v(2);
+
+    normal.computeViolations(0, first, second, &v);
+    EXPECT_NEAR(v[0], 5.0, 1e-12);
+
+    normal.addViolationOffset(0, 4.5);
+    normal.computeViolations(0, first, second, &v);
+    EXPECT_NEAR(v[0], 0.5, 1e-12);
+
+    // thicker than the gap: the constraint is violated (negative gap)
+    normal.addViolationOffset(0, 1.0);
+    normal.computeViolations(0, first, second, &v);
+    EXPECT_NEAR(v[0], -0.5, 1e-12);
+
+    // out-of-range index and null offset are ignored
+    normal.addViolationOffset(3, 10.0);
+    normal.addViolationOffset(0, 0.0);
+    normal.computeViolations(0, first, second, &v);
+    EXPECT_NEAR(v[0], -0.5, 1e-12);
+}
+
+TEST(ConstraintNormalTest, SetViolationFuncReplacesTheFunction) {
+    using sofa::collisionalgorithm::FixedProximity;
+
+    auto first = std::make_shared<FixedProximity>(Vec3(0, 0, 5));
+    auto second = std::make_shared<FixedProximity>(Vec3(0, 0, 0));
+
+    ConstraintNormal normal(Vec3(0, 0, 1));
+    normal.setViolationFunc(0, [](const ConstraintNormal::FIRST::SPtr&, const ConstraintNormal::SECOND::SPtr&,
+                                  const Vec3&) { return 42.0; });
+    sofa::linearalgebra::FullVector<double> v(1);
+    normal.computeViolations(0, first, second, &v);
+    EXPECT_NEAR(v[0], 42.0, 1e-12);
 }

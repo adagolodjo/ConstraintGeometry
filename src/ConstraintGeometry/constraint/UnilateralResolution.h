@@ -53,14 +53,18 @@ public:
  */
 class UnilateralFrictionResolution : public sofa::core::behavior::ConstraintResolution {
 public:
+    /// `cone`: false (default) bounds each tangential force by mu * normal force separately (a pyramid, up to sqrt(2)
+    /// times too much in the diagonal directions); true projects the tangential force on the Coulomb cone
+    /// |ft| <= mu * normal force.
     UnilateralFrictionResolution(double f, double m0 = std::numeric_limits<double>::max(),
                                  double m1 = std::numeric_limits<double>::max(),
-                                 double m2 = std::numeric_limits<double>::max())
+                                 double m2 = std::numeric_limits<double>::max(), bool cone = false)
         : sofa::core::behavior::ConstraintResolution(3),
           m_maxForce0(m0),
           m_maxForce1(m1),
           m_maxForce2(m2),
-          m_friction(f) {
+          m_friction(f),
+          m_cone(cone) {
     }
 
     virtual void resolution(int line, double** w, double* d, double* force, double* /*dFree*/) override {
@@ -100,15 +104,24 @@ public:
 
         const double slip_force = force[line + 0] * m_friction;
 
-        if (force[line + 1] > slip_force)
-            force[line + 1] = slip_force;
-        else if (force[line + 1] < -slip_force)
-            force[line + 1] = -slip_force;
+        if (m_cone) {
+            const double tangential = std::sqrt(force[line + 1] * force[line + 1] + force[line + 2] * force[line + 2]);
+            if (tangential > slip_force) {
+                const double scale = (tangential > 0.0) ? slip_force / tangential : 0.0;
+                force[line + 1] *= scale;
+                force[line + 2] *= scale;
+            }
+        } else {
+            if (force[line + 1] > slip_force)
+                force[line + 1] = slip_force;
+            else if (force[line + 1] < -slip_force)
+                force[line + 1] = -slip_force;
 
-        if (force[line + 2] > slip_force)
-            force[line + 2] = slip_force;
-        else if (force[line + 2] < -slip_force)
-            force[line + 2] = -slip_force;
+            if (force[line + 2] > slip_force)
+                force[line + 2] = slip_force;
+            else if (force[line + 2] < -slip_force)
+                force[line + 2] = -slip_force;
+        }
 
         if (force[line + 1] > m_maxForce1)
             force[line + 1] = m_maxForce1;
@@ -123,6 +136,7 @@ public:
 
     double m_maxForce0, m_maxForce1, m_maxForce2;
     double m_friction;
+    bool m_cone;
 };
 
 }  // namespace constraintgeometry

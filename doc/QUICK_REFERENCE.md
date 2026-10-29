@@ -94,12 +94,14 @@ root.addObject("ConstraintBilateral",
 root.addObject("ConstraintUnilateral",
     input="@algo.output",
     directions="@dir",
-    mu=0.0,             # friction: 0=frictionless, >0=Coulomb
-    maxForce=1e10)
+    mu=0.0,                 # friction: 0=frictionless, >0=Coulomb
+    frictionCone=False,     # True: project the friction force on the Coulomb cone; False: bound each tangent by mu*fn (pyramid)
+    contactDistance=0.0,    # thickness of the contact, e.g. the radius of a rod
+    maxForce0=1e10)         # also maxForce1, maxForce2 for the friction axes
 ```
 
 **Enforces:**
-- `(p₁ - p₂) · n ≥ 0` (no penetration)
+- `(p₁ - p₂) · n - contactDistance ≥ 0` (no penetration)
 - `λ ≥ 0` (no tensile force)
 - `λ · Φ = 0` (complementarity)
 

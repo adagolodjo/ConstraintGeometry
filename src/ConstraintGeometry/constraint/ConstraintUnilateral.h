@@ -20,6 +20,7 @@ public:
 
     Data<double> d_friction;
     Data<double> d_contactDistance;
+    Data<bool> d_frictionCone;
     Data<double> d_maxforce0;
     Data<double> d_maxforce1;
     Data<double> d_maxforce2;
@@ -33,6 +34,9 @@ public:
           d_contactDistance(initData(&d_contactDistance, 0.0, "contactDistance",
                                      "Thickness of the contact: the constraint is violated as soon as the gap along "
                                      "the normal is smaller than this distance (e.g. radius of a rod)")),
+          d_frictionCone(initData(&d_frictionCone, false, "frictionCone",
+                                  "Project the friction force on the Coulomb cone (true) instead of bounding each "
+                                  "tangential component by mu * normal force (false, a pyramid)")),
           d_maxforce0(initData(&d_maxforce0, std::numeric_limits<double>::max(), "maxForce0",
                                "Max force applied on the first axis")),
           d_maxforce1(initData(&d_maxforce1, std::numeric_limits<double>::max(), "maxForce1",
@@ -81,7 +85,7 @@ public:
             return new UnilateralConstraintResolution(d_maxforce0.getValue());
         else if (cst->size() == 3)
             return new UnilateralFrictionResolution(d_friction.getValue(), d_maxforce0.getValue(),
-                                                    d_maxforce1.getValue(), d_maxforce2.getValue());
+                                                    d_maxforce1.getValue(), d_maxforce2.getValue(), d_frictionCone.getValue());
         std::cerr << "Error the size of the constraint is not correct in ConstraintUnilateral size=" << cst->size()
                   << std::endl;
         return NULL;

@@ -39,3 +39,4 @@ public/
 compile_commands.json
 .clangd/
 .cache/
+/CHANGES.md

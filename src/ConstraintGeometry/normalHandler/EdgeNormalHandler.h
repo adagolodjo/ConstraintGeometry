@@ -44,7 +44,7 @@ public:
 };
 
 template <>
-type::Vec3 EdgeNormalHandler::getNormal<collisionalgorithm::EdgeProximity>(
+inline type::Vec3 EdgeNormalHandler::getNormal<collisionalgorithm::EdgeProximity>(
     const collisionalgorithm::EdgeProximity::SPtr& prox) {
     if (prox == nullptr || prox->element() == nullptr) return type::Vec3();
 

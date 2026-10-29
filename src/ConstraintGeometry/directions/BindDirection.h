@@ -10,15 +10,16 @@ namespace sofa::constraintgeometry {
  */
 class BindDirection : public ConstraintDirection {
 public:
-    SOFA_CLASS(BindDirection , ConstraintDirection);
+    SOFA_CLASS(BindDirection, ConstraintDirection);
 
     /*!
      * \brief The ContactNormal class is the container class for direction constraints
      */
-    ConstraintNormal createConstraintsNormal(const BaseProximity::SPtr & first, const BaseProximity::SPtr & second) const override {
+    ConstraintNormal createConstraintsNormal(const BaseProximity::SPtr& first,
+                                             const BaseProximity::SPtr& second) const override {
+        if (first == nullptr || second == nullptr) return ConstraintNormal();
         return ConstraintNormal(first->getPosition() - second->getPosition());
     }
-
 };
 
-}
+}  // namespace sofa::constraintgeometry

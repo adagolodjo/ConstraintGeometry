@@ -1,7 +1,31 @@
 # This file lists all the unit tests for the plugin.
 
-# For each test file, add a line like this:
-# sofa_add_unit_test(MyTestFile.cpp)
+sofa_find_package(Sofa.Testing REQUIRED)
+sofa_find_package(Sofa.Component.StateContainer REQUIRED)
 
-# Add the first example test
-sofa_add_unit_test(FirstConstraintGeometryTest.cpp)
+set(UNIT_TEST_SOURCES
+    FirstConstraintGeometryTest.cpp
+    ConstraintNormalTest.cpp
+    ConstraintProximityTest.cpp
+    ResolutionTest.cpp
+    InternalConstraintTest.cpp
+)
+
+foreach(test_file ${UNIT_TEST_SOURCES})
+    get_filename_component(test_name ${test_file} NAME_WE)
+
+    # Follow the SOFA convention: test executables must end with "_test" so that
+    # they are discovered by sofa-framework/ci scripts/unit-tests.sh.
+    string(REGEX REPLACE "Test$" "" test_name "${test_name}")
+    set(test_target "ConstraintGeometry_${test_name}_test")
+
+    add_executable(${test_target} ${test_file})
+    target_link_libraries(${test_target} Sofa.Testing Sofa.Component.StateContainer ConstraintGeometry)
+
+    # sofa-framework/ci runs the unit tests found in <build_dir>/bin.
+    set_target_properties(${test_target} PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+    )
+
+    add_test(NAME ${test_target} COMMAND ${test_target})
+endforeach()

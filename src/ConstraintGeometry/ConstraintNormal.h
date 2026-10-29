@@ -66,6 +66,19 @@ public:
         return m_dirs.size();
     }
 
+    /// The two unit directions orthogonal to `axis` (and to each other): the transverse directions of a sliding constraint.
+    /// Empty if `axis` is null.
+    static ConstraintNormal transverse(const type::Vec3 &axis) {
+        ConstraintNormal axisOnly(axis);
+        ConstraintNormal result;
+        if (axisOnly.size() == 0) return result;
+        axisOnly.addOrthogonalDirection();
+        axisOnly.addOrthogonalDirection();
+        result.add(axisOnly[1]);
+        result.add(axisOnly[2]);
+        return result;
+    }
+
     ConstraintNormal &addOrthogonalDirection(ViolationFunction f = getViolationFunc()) {
         if (m_dirs.size() == 0) {
             return add(type::Vec3(1, 0, 0), std::move(f));

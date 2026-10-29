@@ -113,3 +113,16 @@ TEST(ConstraintNormalTest, SetViolationFuncReplacesTheFunction) {
     normal.computeViolations(0, first, second, &v);
     EXPECT_NEAR(v[0], 42.0, 1e-12);
 }
+
+TEST(ConstraintNormalTest, TransverseDirectionsAreOrthogonalToTheAxis) {
+    for (const Vec3 axis : {Vec3(1, 0, 0), Vec3(0, 0, 3), Vec3(0, 2, 0), Vec3(1, 2, -3)}) {
+        const ConstraintNormal normal = ConstraintNormal::transverse(axis);
+        ASSERT_EQ(normal.size(), 2u);
+        EXPECT_NEAR(normal[0].norm(), 1.0, 1e-12);
+        EXPECT_NEAR(normal[1].norm(), 1.0, 1e-12);
+        EXPECT_NEAR(dot(normal[0], normal[1]), 0.0, 1e-12);
+        EXPECT_NEAR(dot(normal[0], axis.normalized()), 0.0, 1e-12);
+        EXPECT_NEAR(dot(normal[1], axis.normalized()), 0.0, 1e-12);
+    }
+    EXPECT_EQ(ConstraintNormal::transverse(Vec3(0, 0, 0)).size(), 0u);
+}

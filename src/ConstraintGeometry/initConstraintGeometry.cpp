@@ -22,6 +22,7 @@ extern void registerContactDirection(sofa::core::ObjectFactory* factory);
 extern void registerFirstDirection(sofa::core::ObjectFactory* factory);
 extern void registerFixedFrameDirection(sofa::core::ObjectFactory* factory);
 extern void registerSecondDirection(sofa::core::ObjectFactory* factory);
+extern void registerTransverseDirection(sofa::core::ObjectFactory* factory);
 
 // Normal Handlers
 extern void registerEdgeNormalHandler(sofa::core::ObjectFactory* factory);
@@ -89,6 +90,7 @@ void registerObjects(sofa::core::ObjectFactory* factory) {
     registerFirstDirection(factory);
     registerFixedFrameDirection(factory);
     registerSecondDirection(factory);
+    registerTransverseDirection(factory);
 
     // Normal Handlers
     registerEdgeNormalHandler(factory);

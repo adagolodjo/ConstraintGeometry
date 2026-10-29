@@ -37,6 +37,7 @@ set(HEADER_FILES
         ${CONSTRAINTGEOMETRY_SRC}/directions/FirstDirection.h
         ${CONSTRAINTGEOMETRY_SRC}/directions/FixedFrameDirection.h
         ${CONSTRAINTGEOMETRY_SRC}/directions/SecondDirection.h
+        ${CONSTRAINTGEOMETRY_SRC}/directions/TransverseDirection.h
 
         ${CONSTRAINTGEOMETRY_SRC}/normalHandler/EdgeNormalHandler.h
         ${CONSTRAINTGEOMETRY_SRC}/normalHandler/GouraudTriangleNormalHandler.h
@@ -58,6 +59,7 @@ set(SOURCE_FILES
     ${CONSTRAINTGEOMETRY_SRC}/directions/FirstDirection.cpp
     ${CONSTRAINTGEOMETRY_SRC}/directions/FixedFrameDirection.cpp
     ${CONSTRAINTGEOMETRY_SRC}/directions/SecondDirection.cpp
+    ${CONSTRAINTGEOMETRY_SRC}/directions/TransverseDirection.cpp
 
     ${CONSTRAINTGEOMETRY_SRC}/normalHandler/EdgeNormalHandler.cpp
     ${CONSTRAINTGEOMETRY_SRC}/normalHandler/GouraudTriangleNormalHandler.cpp
